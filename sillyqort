@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # shellcheck disable=SC2206
-execute() {
+execute_script() {
   #### Order of script:
   ####   0. Stuff
   ####   1. Variables
@@ -98,45 +98,54 @@ execute() {
     rest=("$@")
   }
 
+  #### Do the actual stuff:
+  execute_finally() {
+    curl "${curl_args[@]}" | ${postproc}
+    echo
+  }
+
+  main_body() {
+    parse_args "$@"
+
+    #### Find apikey. Seek locally, then in parent directory, then in $HOME:
+    for apifile in 'apikey.txt' "$(realpath "${script_dir}/../apikey.txt")" "${HOME}/qortal/apikey.txt"; do
+      if [[ -f $apifile ]]; then
+        read -r apikey <"${apifile}"
+        break
+      fi
+    done
+
+    #### Fix url: add http:// if missing, add port if missing, optionally add BASE_URL or localhost:
+    if [[ "${url:0:4}" != 'http' ]]; then
+      base_url=${BASE_URL-localhost}
+      if [[ "${base_url:0:4}" != 'http' ]]; then
+        base_url="http://${base_url}"
+      fi
+      if [[ -n "${base_url/#*:[0-9[0-9]*/}" ]]; then
+        base_url="${base_url%%/}:${port}"
+      fi
+      url="${base_url%%/}/${url#/}"
+    fi
+
+    #### Populate curl_args:
+    declare -a curl_args
+    curl_args=(--silent --insecure --connect-timeout 5)
+    [[ -n "${apikey}" ]] && curl_args+=(-H "X-API-KEY: ${apikey}")
+    [[ -n "${content_type}" ]] && curl_args+=('--header' "${content_type}")
+    [[ -n "${method}" ]] && curl_args+=("${method}")
+    [[ -n "${src}" ]] && curl_args+=(${src})
+    curl_args+=(--url "${url}")
+    [[ -n ${rest[*]} ]] && curl_args+=(--data ${rest[@]})
+    print_curl_args
+
+    #### 4) Execute curl command unless dry-run:
+    [[ -n "${dry_run}" ]] && exit 0
+    execute_finally
+  }
+
   #############################################
   #### 3) Here begins 'the main body' of the script:
-  parse_args "$@"
-
-  #### Find apikey. Seek locally, then in parent directory, then in $HOME:
-  for apifile in 'apikey.txt' "$(realpath "${script_dir}/../apikey.txt")" "${HOME}/qortal/apikey.txt"; do
-    if [[ -f $apifile ]]; then
-      read -r apikey <"${apifile}"
-      break
-    fi
-  done
-
-  #### Fix url: add http:// if missing, add port if missing, optionally add BASE_URL or localhost:
-  if [[ "${url:0:4}" != 'http' ]]; then
-    base_url=${BASE_URL-localhost}
-    if [[ "${base_url:0:4}" != 'http' ]]; then
-      base_url="http://${base_url}"
-    fi
-    if [[ -n "${base_url/#*:[0-9[0-9]*/}" ]]; then
-      base_url="${base_url%%/}:${port}"
-    fi
-    url="${base_url%%/}/${url#/}"
-  fi
-
-  #### Populate curl_args:
-  declare -a curl_args
-  curl_args=(--silent --insecure --connect-timeout 5)
-  [[ -n "${apikey}" ]] && curl_args+=(-H "X-API-KEY: ${apikey}")
-  [[ -n "${content_type}" ]] && curl_args+=('--header' "${content_type}")
-  [[ -n "${method}" ]] && curl_args+=("${method}")
-  [[ -n "${src}" ]] && curl_args+=(${src})
-  curl_args+=(--url "${url}")
-  [[ -n ${rest[*]} ]] && curl_args+=(--data ${rest[@]})
-  print_curl_args
-
-  #### 4) Execute curl command unless dry-run:
-  [[ -n "${dry_run}" ]] && exit 0
-  curl "${curl_args[@]}" | ${postproc}
-  echo
+  main_body "$@"
 }
 
-execute "$@"
+execute_script "$@"
