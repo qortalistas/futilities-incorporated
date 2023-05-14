@@ -139,7 +139,7 @@ execute_script() {
     print_curl_args
 
     #### 4) Execute curl command unless dry-run:
-    [[ -n "${dry_run}" ]] && exit 0
+    [[ -n "${dry_run}" ]] && return 0
     execute_finally
   }
 
