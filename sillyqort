@@ -6,7 +6,7 @@ execute() {
   ####   1. Variables
   ####   2. Functions
   ####   3. Main body
-  ####   4 Execution
+  ####   4. Execution
 
   #### Ensure proper splits:
   IFS=" " && set -f
