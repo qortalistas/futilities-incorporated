@@ -3,12 +3,13 @@
 # shellcheck disable=SC2206
 execute() {
   #### Order of script:
+  ####   0. Stuff
   ####   1. Variables
   ####   2. Functions
   ####   3. Main body
   ####   4. Execution
 
-  #### Ensure proper splits:
+  #### 0) Ensure proper splits:
   IFS=" " && set -f
 
   #### 1) Variables are not needed in global scope:
