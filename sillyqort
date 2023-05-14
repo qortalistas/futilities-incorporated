@@ -1,0 +1,141 @@
+#!/usr/bin/env bash
+
+# shellcheck disable=SC2206
+execute() {
+  #### Order of script:
+  ####   1. Variables
+  ####   2. Functions
+  ####   3. Main body
+  ####   4 Execution
+
+  #### Ensure proper splits:
+  IFS=" " && set -f
+
+  #### 1) Variables are not needed in global scope:
+  #### and bash uses dynamic scoping, so the 'locals' propagate to sub-functions:
+  local url rest method src content_type testnet apikey base_url postproc \
+    port script_dir call_name is_args_bad curl_args opt_name arg
+
+  #### called-as name:
+  call_name="${0##*/}"
+
+  #### Do we really want to cd to the script's directory?
+  #script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
+  script_dir="$(realpath "$(dirname "${BASH_SOURCE[0]}")")"
+
+  #### default output post-processor:
+  postproc='cat'
+
+  #### Qortal defaults:
+  port=12391
+  example_host=node10.qortal.org
+
+  #### 2) Some functions defined here. See 'main body' further down:
+  print_usage() {
+    echo "usage: $call_name [-l] [-p] [-t] [DELETE] <url> [<post-data>]"
+    echo '-l: use localhost as source address'
+    echo '-p: pretty-print JSON output'
+    echo '-t: use testnet port'
+    echo "example (using localhost:${port}): $call_name -p blocks/last"
+    echo "example: $call_name -p http://${example_host}:${port}/blocks/last"
+    echo "example: BASE_URL=http://${example_host}:${port} $call_name -p blocks/last"
+    echo "example: BASE_URL=${example_host} $call_name -p blocks/last"
+    echo "example: $call_name -l DELETE peers/known"
+    exit 1
+  }
+
+  print_curl_args() {
+    #### Empty function. Placeholder for verbose mode.
+    :
+  }
+
+  verbosify() {
+    #### Replace function 'print_curl_args' with a verbose version, if requested by options -v or -d:
+    print_curl_args() {
+      echo 'curl_args:' "${curl_args[@]}"
+      for arg in "${curl_args[@]}"; do
+        echo " : ${arg}"
+      done
+    }
+  }
+
+  parse_args() {
+    #### Using getopts to parse options allows to use conventional 'condensed' options,
+    #        like '-lv' rather than '-l -v':
+    while getopts pltjvd opt_name; do
+      case ${opt_name} in
+      p) postproc='json_pp -f json -t json -json_opt utf8,pretty' ;;
+      l) src='--interface localhost' ;;
+      t) testnet=true ;;
+      j) content_type='Content-Type: application/json' ;;
+      v) verbosify ;;
+      d)
+        dry_run=true
+        echo 'Dry run. No changes will be made.'
+        verbosify
+        ;;
+      ?) is_args_bad=true ;;
+      esac
+    done
+    shift $((OPTIND - 1))
+    case $1 in
+    #### If first argument is DELETE, then set method to -X DELETE and shift:
+    [Dd][Ee][Ll][Ee][Tt][Ee])
+      shift
+      method='-X DELETE'
+      ;;
+    esac
+    #### I must assume that it makes sense to only change the port if the call_name is 'qort'?:
+    [[ "${call_name}" == 'qort' && -n $testnet ]] && port=62391
+    #### If there is no argument for url, or otherwise the arguments are bad, then print usage and exit:
+    if [[ $# -lt 1 || ${is_args_bad} == true ]]; then
+      print_usage
+    fi
+    url=$1
+    shift
+    #### Stash remaining arguments for use as post-data:
+    rest=("$@")
+  }
+
+  #############################################
+  #### 3) Here begins 'the main body' of the script:
+  parse_args "$@"
+
+  #### Find apikey. Seek locally, then in parent directory, then in $HOME:
+  for apifile in 'apikey.txt' "$(realpath "${script_dir}/../apikey.txt")" "${HOME}/qortal/apikey.txt"; do
+    if [[ -f $apifile ]]; then
+      read -r apikey <"${apifile}"
+      break
+    fi
+  done
+
+  #### Fix url: add http:// if missing, add port if missing, optionally add BASE_URL or localhost:
+  if [[ "${url:0:4}" != 'http' ]]; then
+    base_url=${BASE_URL-localhost}
+    if [[ "${base_url:0:4}" != 'http' ]]; then
+      base_url="http://${base_url}"
+    fi
+    if [[ -n "${base_url/#*:[0-9[0-9]*/}" ]]; then
+      base_url="${base_url%%/}:${port}"
+    fi
+    url="${base_url%%/}/${url#/}"
+  fi
+
+  #### Populate curl_args:
+  declare -a curl_args
+  curl_args=(--silent --insecure --connect-timeout 5)
+  [[ -n "${apikey}" ]] && curl_args+=(-H "X-API-KEY: ${apikey}")
+  [[ -n "${content_type}" ]] && curl_args+=('--header' "${content_type}")
+  [[ -n "${method}" ]] && curl_args+=("${method}")
+  [[ -n "${src}" ]] && curl_args+=(${src})
+  curl_args+=(--url "${url}")
+  [[ -n ${rest[*]} ]] && curl_args+=(--data ${rest[@]})
+  print_curl_args
+
+  #### 4) Execute curl command unless dry-run:
+  [[ -n "${dry_run}" ]] && exit 0
+  curl "${curl_args[@]}" | ${postproc}
+  echo
+}
+
+execute "$@"
