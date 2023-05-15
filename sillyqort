@@ -53,10 +53,10 @@ execute_script() {
   verbosify() {
     #### Replace function 'print_curl_args' with a verbose version, if requested by options -v or -d:
     print_curl_args() {
-      echo 'curl_args:' "${curl_args[@]}"
       for arg in "${curl_args[@]}"; do
         echo " : ${arg}"
       done
+      echo 'curl_args:' "${curl_args[@]}"
     }
   }
 
@@ -105,10 +105,7 @@ execute_script() {
 
     #### Find apikey. Seek locally, then in parent directory, then in $HOME:
     for apifile in 'apikey.txt' "$(realpath "${script_dir}/../apikey.txt")" "${HOME}/qortal/apikey.txt"; do
-      if [[ -f $apifile ]]; then
-        read -r apikey <"${apifile}"
-        break
-      fi
+      read -r apikey <"${apifile}" && break
     done
 
     #### Fix url: add http:// if missing, add port if missing, optionally add BASE_URL or localhost:
