@@ -15,7 +15,7 @@ execute_script() {
   #### 1) Variables are not needed in global scope:
   #### and bash uses dynamic scoping, so the 'locals' propagate to sub-functions:
   local url rest method src content_type testnet apikey base_url postproc \
-    port script_dir call_name is_args_bad curl_args opt_name arg
+    port script_dir call_name is_options_bad curl_args opt_name arg
 
   #### called-as name:
   call_name="${0##*/}"
@@ -77,7 +77,7 @@ execute_script() {
         echo 'Dry run. No changes will be made.'
         verbosify
         ;;
-      ?) is_args_bad=true ;;
+      ?) is_options_bad=true ;;
       esac
     done
     shift $((OPTIND - 1))
@@ -91,7 +91,7 @@ execute_script() {
     #### I must assume that it makes sense to only change the port if the call_name is 'qort'?:
     [[ "${call_name}" == 'qort' && -n $testnet ]] && port=62391
     #### If there is no argument for url, or otherwise the arguments are bad, then print usage and exit:
-    if [[ $# -lt 1 || ${is_args_bad} == true ]]; then
+    if [[ $# -lt 1 || ${is_options_bad} == true ]]; then
       print_usage
     fi
     url=$1
