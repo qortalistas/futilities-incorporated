@@ -121,6 +121,8 @@ execute_script() {
     [[ -n "${src}" ]] && curl_args+=(${src})
     curl_args+=(--url "${url}")
     [[ -n ${rest[*]} ]] && curl_args+=(--data ${rest[@]})
+
+    #### Make noise:
     [[ ${is_verbose} == true ]] && print_curl_args
 
     #### 4) Execute curl command unless dry-run:
