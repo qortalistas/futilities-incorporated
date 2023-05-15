@@ -21,8 +21,8 @@ execute_script() {
   call_name="${0##*/}"
 
   #### Which way is best?
-  #script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
-  script_dir="$(realpath "$(dirname "${BASH_SOURCE[0]}")")"
+  script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
+  #  script_dir="$(realpath "$(dirname "${BASH_SOURCE[0]}")")"
 
   #### default output post-processor:
   postproc='cat'
