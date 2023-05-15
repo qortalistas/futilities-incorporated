@@ -105,7 +105,7 @@ execute_script() {
 
     #### Find apikey. Seek locally, then in parent directory, then in $HOME:
     for apipath in '.' "${script_dir}/.." "${HOME}/qortal"; do
-      read -r apikey <"$(realpath "${apipath}/apikey.txt")" && break
+      read -r apikey <"${apipath}/apikey.txt" && break
     done
 
     #### Fix url: add http:// if missing, add port if missing, optionally add BASE_URL or localhost:
