@@ -45,21 +45,28 @@ execute_script() {
     exit 1
   }
 
-  print_curl_args() {
-    #### Empty function. Placeholder for verbose mode.
-    :
-  }
+  #  print_curl_args() {
+  #    #### Empty function. Placeholder for verbose mode.
+  #    :
+  #  }
+  #
+  #  verbosify() {
+  #    #### Replace function 'print_curl_args' with a verbose version, if requested by options -v or -d:
+  #    #### While this is a practical and flashy technique,
+  #    #    it should probably just be done with ordinary hoomane ifs. ;-)
+  #    print_curl_args() {
+  #      for arg in "${curl_args[@]}"; do
+  #        echo " : ${arg}"
+  #      done
+  #      echo 'curl_args:' "${curl_args[@]}"
+  #    }
+  #  }
 
-  verbosify() {
-    #### Replace function 'print_curl_args' with a verbose version, if requested by options -v or -d:
-    #### While this is a practical and flashy technique,
-    #    it should probably just be done with ordinary hoomane ifs. ;-)
-    print_curl_args() {
-      for arg in "${curl_args[@]}"; do
-        echo " : ${arg}"
-      done
-      echo 'curl_args:' "${curl_args[@]}"
-    }
+  print_curl_args() {
+    for arg in "${curl_args[@]}"; do
+      echo " : ${arg}"
+    done
+    echo 'curl_args:' "${curl_args[@]}"
   }
 
   parse_args() {
@@ -71,11 +78,11 @@ execute_script() {
       l) src='--interface localhost' ;;
       t) testnet=true ;;
       j) content_type='Content-Type: application/json' ;;
-      v) verbosify ;;
+      v) is_verbose=true ;;
       d)
         dry_run=true
+        is_verbose=true
         echo 'Dry run. No changes will be made.'
-        verbosify
         ;;
       ?) is_options_bad=true ;;
       esac
@@ -107,7 +114,7 @@ execute_script() {
 
     #### Find apikey. Seek locally, then in parent directory, then in $HOME:
     for apipath in '.' "${script_dir}/.." "${HOME}/qortal"; do
-      read -r apikey <"${apipath}/apikey.txt" && break
+      read -r apikey 2>/dev/null <"${apipath}/apikey.txt" && break
     done
 
     #### Fix url: add http:// if missing, add port if missing, optionally add BASE_URL or localhost:
@@ -131,7 +138,7 @@ execute_script() {
     [[ -n "${src}" ]] && curl_args+=(${src})
     curl_args+=(--url "${url}")
     [[ -n ${rest[*]} ]] && curl_args+=(--data ${rest[@]})
-    print_curl_args
+    [[ ${is_verbose} == true ]] && print_curl_args
 
     #### 4) Execute curl command unless dry-run:
     [[ -n "${dry_run}" ]] && return 0
