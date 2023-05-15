@@ -98,12 +98,6 @@ execute_script() {
     rest=("$@")
   }
 
-  #### Do the actual stuff:
-  execute_finally() {
-    curl "${curl_args[@]}" | ${postproc}
-    echo
-  }
-
   main_body() {
     parse_args "$@"
 
@@ -140,7 +134,8 @@ execute_script() {
 
     #### 4) Execute curl command unless dry-run:
     [[ -n "${dry_run}" ]] && return 0
-    execute_finally
+    curl "${curl_args[@]}" | ${postproc}
+    echo
   }
 
   #############################################
