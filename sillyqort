@@ -98,6 +98,8 @@ execute_script() {
     rest=("$@")
   }
 
+  #############################################
+  #### 3) Here begins 'the main body' of the script:
   main_body() {
     parse_args "$@"
 
@@ -138,8 +140,6 @@ execute_script() {
     echo
   }
 
-  #############################################
-  #### 3) Here begins 'the main body' of the script:
   main_body "$@"
 }
 
