@@ -20,7 +20,7 @@ execute_script() {
   #### called-as name:
   call_name="${0##*/}"
 
-  #### Do we really want to cd to the script's directory?
+  #### Which way is best?
   #script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
   script_dir="$(realpath "$(dirname "${BASH_SOURCE[0]}")")"
 
