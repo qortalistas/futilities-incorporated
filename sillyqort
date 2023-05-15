@@ -104,8 +104,8 @@ execute_script() {
     parse_args "$@"
 
     #### Find apikey. Seek locally, then in parent directory, then in $HOME:
-    for apifile in 'apikey.txt' "$(realpath "${script_dir}/../apikey.txt")" "${HOME}/qortal/apikey.txt"; do
-      read -r apikey <"${apifile}" && break
+    for apipath in '.' "${script_dir}/.." "${HOME}/qortal"; do
+      read -r apikey <"$(realpath "${apipath}/apikey.txt")" && break
     done
 
     #### Fix url: add http:// if missing, add port if missing, optionally add BASE_URL or localhost:
