@@ -45,23 +45,6 @@ execute_script() {
     exit 1
   }
 
-  #  print_curl_args() {
-  #    #### Empty function. Placeholder for verbose mode.
-  #    :
-  #  }
-  #
-  #  verbosify() {
-  #    #### Replace function 'print_curl_args' with a verbose version, if requested by options -v or -d:
-  #    #### While this is a practical and flashy technique,
-  #    #    it should probably just be done with ordinary hoomane ifs. ;-)
-  #    print_curl_args() {
-  #      for arg in "${curl_args[@]}"; do
-  #        echo " : ${arg}"
-  #      done
-  #      echo 'curl_args:' "${curl_args[@]}"
-  #    }
-  #  }
-
   print_curl_args() {
     for arg in "${curl_args[@]}"; do
       echo " : ${arg}"
